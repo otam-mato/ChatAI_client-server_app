@@ -1,4 +1,4 @@
-# ChatAI re-engineering to Client-Server architecture
+# ChatAI app re-engineering to Client-Server architecture
 
 
 ## Re-engineering the app to use client-server architecture for the improved security and scalability
