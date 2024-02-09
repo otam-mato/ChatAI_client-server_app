@@ -1,0 +1,126 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>two-tier ChatGPT Clone</title>
+</head>
+
+<body>
+    <h1>ChatAI</h1>
+    <form id="inputform" onsubmit="searchQuestion(event)">
+        <fieldset>
+            <legend>Input</legend>
+            <label id="questionLabel" for="chatGPT">Enter your question:</label>
+            <textarea id="chatGPT" name="question" required aria-labelledby="questionLabel"></textarea>
+            <button type="submit" aria-label="Answer">Answer</button>
+        </fieldset>
+        <div id="history">
+            <label>Q&A History:</label>
+            <ul id="questionList"></ul>
+            <button id="clearHistoryBtn" onclick="clearHistory()" aria-label="Clear History">Clear History</button>
+        </div>
+    </form>
+    <script>
+        var questionHistory = JSON.parse(localStorage.getItem('questionHistory')) || [];
+
+        function searchQuestion(event) {
+            event.preventDefault();
+            var question = document.getElementById('chatGPT').value;
+
+            makeChatGPTApiCall(question)
+                .then(response => {
+                    updateQuestionHistory(question, response.answer);
+                })
+                .catch(error => {
+                    console.error("API Error:", error);
+                    alert("Failed to fetch data. Please try again.");
+                });
+        }
+
+        function updateQuestionHistory(question, answer) {
+            var questionItem = document.createElement('li');
+            var answerItem = document.createElement('li');
+            questionItem.innerHTML = `<strong>Q:</strong> ${question}`;
+            answerItem.innerHTML = `<strong>A:</strong> ${answer}`;
+            var questionList = document.getElementById('questionList');
+            questionList.appendChild(questionItem);
+            questionList.appendChild(answerItem);
+            questionHistory.push({ question, answer });
+            localStorage.setItem('questionHistory', JSON.stringify(questionHistory));
+        }
+
+        function makeChatGPTApiCall(question) {
+            var apiUrl = 'http://localhost:3000/api/chat';
+
+            var messages = questionHistory.map(entry => ({
+                role: 'system',
+                content: 'You are a helpful assistant.',
+            }, {
+                role: 'user',
+                content: entry.question,
+            }));
+
+            messages.push({ role: 'user', content: question });
+
+            return fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conversation: messages, // Send the entire conversation history
+                }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('API request failed: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle the response data as needed
+                console.log('API Response:', data);
+                return data; // Return the response for further processing
+            })
+            .catch(error => {
+                console.error('API Error:', error.message);
+                console.log('API Response:', error.response);
+                throw error;
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('questionHistory');
+            var questionList = document.getElementById('questionList');
+            questionList.innerHTML = "";
+            questionHistory = [];
+        }
+
+        (function () {
+            displayQuestionHistory();
+        })();
+
+        document.getElementById('clearHistoryBtn').addEventListener('click', function (event) {
+            event.preventDefault();
+            clearHistory();
+        });
+
+        function displayQuestionHistory() {
+            var questionList = document.getElementById('questionList');
+            questionHistory.forEach(entry => {
+                var questionItem = document.createElement('li');
+                var answerItem = document.createElement('li');
+                questionItem.innerHTML = `<strong>Q:</strong> ${entry.question}`;
+                answerItem.innerHTML = `<strong>A:</strong> ${entry.answer}`;
+                questionList.appendChild(questionItem);
+                questionList.appendChild(answerItem);
+            });
+        }
+    </script>
+</body>
+
+</html>
