@@ -1,4 +1,4 @@
-# Client-Server-ChatGPT-clone-workshop--Oleg-Jack-Elena-Emma
+# ChatAI re-engineering to Client-Server architecture
 
 
 ## Re-engineering the app to use client-server architecture for the improved security and scalability
